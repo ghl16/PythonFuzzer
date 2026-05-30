@@ -13,7 +13,7 @@ parser.add_argument("-t", "--target", nargs="+", required=True,
 parser.add_argument("-i", "--iterations", type=int, default=1000,
                     help="Number of fuzzing iterations")
 
-# NEW ADDITION ONLY
+
 parser.add_argument("-hl", "--hushlogs", action="store_true",
                     help="Suppress logging output (currently unused flag)")
 
@@ -28,20 +28,18 @@ SEED = int(time.time())
 
 random.seed(SEED)
 
-# -----------------------------
-# FUZZ INPUT GENERATORS
-# -----------------------------
+# Actual fuzzing logic
 
 def random_bytes():
     size = random.randint(1, MAX_SIZE)
     return os.urandom(size)
 
-def weird_text(): 
+def weird_text():  
     size = random.randint(1, MAX_SIZE)
     chars = string.printable + "\x00\xff\xfe\x01\x02"
     return "".join(random.choice(chars) for _ in range(size)).encode("utf-8", errors="ignore")
 
-def structured_noise():
+def structured_noise(): 
     blob = bytearray()
     for _ in range(random.randint(10, 200)):
         choice = random.randint(0, 2)
@@ -54,12 +52,12 @@ def structured_noise():
     return bytes(blob)
 
 def mutate(seed): # Mutate input: TODO: improve mutation logic by favouring the change of specific header or payload
-    data = bytearray(seed)
+    data = bytearray(seed) 
     for _ in range(random.randint(1, 50)):
         idx = random.randint(0, len(data) - 1)
         data[idx] ^= random.randint(0, 255)
     return bytes(data)
-
+# Function needs upgrading: Mainly just early testing for a new feature. TODO: improve logic and mutation 
 
 def run_case(data):
     try:
@@ -75,14 +73,14 @@ def run_case(data):
 
     except subprocess.TimeoutExpired:
         p.kill()
-        return -1, b"", b"TIMEOUT"
+        return -1, b"", b"TIMEOUT
 
     except Exception as e:
         return -999, b"", str(e).encode()
 
-def log_crash(data, code, err):
+def log_crash(data, code, err): # TODO: Also log hangs: but main fuzzer still needs to recognise hangs
     with open(CRASH_LOG, "ab") as f:
-        f.write(b"\n==== CRASH ====\n")
+        f.write(b"Crash: ")
         f.write(b"Return code: " + str(code).encode() + b"\n")
         f.write(b"Error:\n" + err + b"\n")
         f.write(b"Input:\n" + repr(data).encode() + b"\n")
