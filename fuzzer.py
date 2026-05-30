@@ -85,9 +85,7 @@ def log_crash(data, code, err): # TODO: Also log hangs: but main fuzzer still ne
         f.write(b"Error:\n" + err + b"\n")
         f.write(b"Input:\n" + repr(data).encode() + b"\n")
 
-# -----------------------------
-# MAIN LOOP
-# -----------------------------
+# Main
 
 def main():
     print(f"[+] Starting fuzzer with seed {SEED}")
