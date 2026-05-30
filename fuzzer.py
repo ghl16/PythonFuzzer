@@ -6,14 +6,16 @@ import time
 import sys
 import argparse
 
-# -----------------------------
-# ARG PARSE
-# -----------------------------
+# Argsparse for more customized input
 parser = argparse.ArgumentParser(description="Black-box binary fuzzer")
 parser.add_argument("-t", "--target", nargs="+", required=True,
                     help="Target command to fuzz (e.g. ./binary or python app.py)")
 parser.add_argument("-i", "--iterations", type=int, default=1000,
                     help="Number of fuzzing iterations")
+
+# NEW ADDITION ONLY
+parser.add_argument("-hl", "--hushlogs", action="store_true",
+                    help="Suppress logging output (currently unused flag)")
 
 args = parser.parse_args()
 
@@ -21,8 +23,8 @@ TARGET_CMD = args.target
 ITERATIONS = args.iterations
 
 MAX_SIZE = 4096
-CRASH_LOG = "crashes.log"
-SEED = int(time.time())
+CRASH_LOG = "crashes.log" # Could change to txt format but just keep it like this for now
+SEED = int(time.time()) 
 
 random.seed(SEED)
 
@@ -34,7 +36,7 @@ def random_bytes():
     size = random.randint(1, MAX_SIZE)
     return os.urandom(size)
 
-def weird_text():
+def weird_text(): 
     size = random.randint(1, MAX_SIZE)
     chars = string.printable + "\x00\xff\xfe\x01\x02"
     return "".join(random.choice(chars) for _ in range(size)).encode("utf-8", errors="ignore")
@@ -51,16 +53,13 @@ def structured_noise():
             blob.extend(b"\x00" * random.randint(1, 32))
     return bytes(blob)
 
-def mutate(seed):
+def mutate(seed): # Mutate input: TODO: improve mutation logic by favouring the change of specific header or payload
     data = bytearray(seed)
     for _ in range(random.randint(1, 50)):
         idx = random.randint(0, len(data) - 1)
         data[idx] ^= random.randint(0, 255)
     return bytes(data)
 
-# -----------------------------
-# CORE FUZZ LOOP
-# -----------------------------
 
 def run_case(data):
     try:
@@ -120,7 +119,7 @@ def main():
         if b"segfault" in err.lower() or b"panic" in err.lower():
             log_crash(data, code, err)
 
-    print("[+] Done")
+    print("[+] Done") 
 
 if __name__ == "__main__":
     main()
